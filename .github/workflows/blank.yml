@@ -22,16 +22,25 @@ jobs:
     - name: Unpack Project ZIP
       run: |
         unzip "ДРАГ ИСП.zip" -d project_extracted
-        # Ищем, где именно лежит файл build.gradle.kts или build.gradle, и переносим всё оттуда в корень
         TARGET_DIR=$(find project_extracted -name "gradlew" -exec dirname {} \+ | head -n 1)
         if [ -n "$TARGET_DIR" ]; then
           echo "Проект найден в папке: $TARGET_DIR"
           mv "$TARGET_DIR"/* .
-          # Переносим скрытые папки (например, .gradle), если они есть
           find "$TARGET_DIR" -maxdepth 1 -name ".*" -not -name "." -not -name ".." -exec mv {} . \;
         else
           echo "Внимание: gradlew не найден напрямую, пробуем перенести всё из project_extracted"
           mv project_extracted/* .
+        fi
+
+    - name: Fix Missing AlertDialog Import
+      run: |
+        FILE_PATH="app/src/main/java/com/example/dragauto/MainActivity.kt"
+        if [ -f "$FILE_PATH" ]; then
+          echo "Исправляем импорт в MainActivity.kt"
+          # Добавляем импорт AlertDialog после строки с пакетом
+          sed -i '/package com.example.dragauto/a import androidx.appcompat.app.AlertDialog' "$FILE_PATH"
+        else
+          echo "Файл MainActivity.kt не найден по стандартному пути!"
         fi
 
     - name: Make Gradle executable
