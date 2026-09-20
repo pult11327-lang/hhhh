@@ -22,14 +22,18 @@ jobs:
     - name: Unpack Project ZIP
       run: |
         unzip "ДРАГ ИСП.zip" -d project_extracted
-        if [ -d "project_extracted/DragAuto_GitHub_Actions_READY" ]; then
-          mv project_extracted/DragAuto_GitHub_Actions_READY/* .
-        elif [ -d "project_extracted/dragauto" ]; then
-          mv project_extracted/dragauto/* .
+        # Ищем, где именно лежит файл build.gradle.kts или build.gradle, и переносим всё оттуда в корень
+        TARGET_DIR=$(find project_extracted -name "gradlew" -exec dirname {} \+ | head -n 1)
+        if [ -n "$TARGET_DIR" ]; then
+          echo "Проект найден в папке: $TARGET_DIR"
+          mv "$TARGET_DIR"/* .
+          # Переносим скрытые папки (например, .gradle), если они есть
+          find "$TARGET_DIR" -maxdepth 1 -name ".*" -not -name "." -not -name ".." -exec mv {} . \;
         else
+          echo "Внимание: gradlew не найден напрямую, пробуем перенести всё из project_extracted"
           mv project_extracted/* .
         fi
-        
+
     - name: Make Gradle executable
       run: chmod +x gradlew
 
@@ -40,4 +44,5 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: app-debug
-        path: app/build/outputs/apk/debug/app-debug.apk
+        path: |
+          **/build/outputs/apk/debug/*.apk
