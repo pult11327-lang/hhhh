@@ -37,10 +37,16 @@ jobs:
         FILE_PATH="app/src/main/java/com/example/dragauto/MainActivity.kt"
         if [ -f "$FILE_PATH" ]; then
           echo "Исправляем импорт в MainActivity.kt"
-          # Добавляем импорт AlertDialog после строки с пакетом
           sed -i '/package com.example.dragauto/a import androidx.appcompat.app.AlertDialog' "$FILE_PATH"
-        else
-          echo "Файл MainActivity.kt не найден по стандартному пути!"
+        fi
+
+    - name: Fix Ambiguity in DragAccessibilityService
+      run: |
+        SERVICE_PATH="app/src/main/java/com/example/dragauto/DragAccessibilityService.kt"
+        if [ -f "$SERVICE_PATH" ]; then
+          echo "Исправляем неоднозначность типов в DragAccessibilityService.kt"
+          # Явно приводим элементы сложения к строке с помощью .toString(), чтобы убрать ошибку компиляции
+          sed -i '54s/\+/.toString() +/' "$SERVICE_PATH" || true
         fi
 
     - name: Make Gradle executable
